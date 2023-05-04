@@ -86,8 +86,8 @@ type GraphQLResponse struct {
 }
 
 type GraphQLRequest struct {
-	Query     string                 `json:"query,omitempty"`
-	Variables map[string]interface{} `json:"variables,omitempty"`
+	Query     string `json:"query,omitempty"`
+	Variables any    `json:"variables,omitempty"`
 }
 
 type GraphQLError struct {
