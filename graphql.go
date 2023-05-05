@@ -80,14 +80,14 @@ func (c *GraphQLClient) Mutation(graphqlRequest GraphQLRequest) (*GraphQLRespons
 }
 
 type GraphQLResponse struct {
-	Data       any                    `json:"data"`
-	Errors     []GraphQLError         `json:"errors"`
-	Extensions map[string]interface{} `json:"extensions"`
+	Data       any            `json:"data"`
+	Errors     []GraphQLError `json:"errors"`
+	Extensions map[string]any `json:"extensions"`
 }
 
 type GraphQLRequest struct {
-	Query     string `json:"query,omitempty"`
-	Variables any    `json:"variables,omitempty"`
+	Query     string         `json:"query,omitempty"`
+	Variables map[string]any `json:"variables,omitempty"`
 }
 
 type GraphQLError struct {
