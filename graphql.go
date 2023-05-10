@@ -93,7 +93,7 @@ type GraphQLRequest struct {
 type GraphQLError struct {
 	Message   string                 `json:"message"`
 	Locations []GraphQLErrorLocation `json:"locations"`
-	Path      string                 `json:"path"`
+	Path      []any                  `json:"path"`
 }
 
 type GraphQLErrorLocation struct {
