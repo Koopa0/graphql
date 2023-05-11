@@ -2,26 +2,27 @@ package graphql
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 )
 
-type GraphQLClient struct {
-	Client   *http.Client
-	Endpoint string
-	Header   http.Header
+type Client struct {
+	HttpClient *http.Client
+	Endpoint   string
+	Header     http.Header
 }
 
-func NewGraphQLClient(endpoint string, httpClient *http.Client, header http.Header) *GraphQLClient {
-	return &GraphQLClient{
-		Client:   httpClient,
-		Endpoint: endpoint,
-		Header:   header,
+func NewGraphQLClient(endpoint string, httpClient *http.Client, header http.Header) *Client {
+	return &Client{
+		HttpClient: httpClient,
+		Endpoint:   endpoint,
+		Header:     header,
 	}
 }
 
-func (c *GraphQLClient) Query(graphqlRequest GraphQLRequest) (*GraphQLResponse, error) {
+func (c *Client) Query(graphqlRequest Request) (*Response, error) {
 	// Build the request body
 	body, _ := json.Marshal(graphqlRequest)
 
@@ -36,14 +37,14 @@ func (c *GraphQLClient) Query(graphqlRequest GraphQLRequest) (*GraphQLResponse, 
 	req.Header.Set("Content-Type", "application/json")
 
 	// Get the response
-	resp, err := c.Client.Do(req)
+	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		log.Printf("error making request: %v", err)
 		return nil, err
 	}
 
 	// Decode the response body
-	var result GraphQLResponse
+	var result Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		log.Printf("error decoding response: %v", err)
 		return nil, err
@@ -52,7 +53,38 @@ func (c *GraphQLClient) Query(graphqlRequest GraphQLRequest) (*GraphQLResponse, 
 	return &result, nil
 }
 
-func (c *GraphQLClient) Mutation(graphqlRequest GraphQLRequest) (*GraphQLResponse, error) {
+func (c *Client) QueryWithContext(ctx context.Context, graphqlRequest Request) (*Response, error) {
+	// Build the request body
+	body, _ := json.Marshal(graphqlRequest)
+
+	// Make the request with the provided context
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Endpoint, bytes.NewBuffer(body))
+	if err != nil {
+		log.Println("error creating request:", err)
+		return nil, err
+	}
+
+	req.Header = c.Header
+	req.Header.Set("Content-Type", "application/json")
+
+	// Get the response
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		log.Printf("error making request: %v", err)
+		return nil, err
+	}
+
+	// Decode the response body
+	var result Response
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Printf("error decoding response: %v", err)
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (c *Client) Mutation(graphqlRequest Request) (*Response, error) {
 	// Build the request body
 	body, _ := json.Marshal(graphqlRequest)
 
@@ -65,13 +97,13 @@ func (c *GraphQLClient) Mutation(graphqlRequest GraphQLRequest) (*GraphQLRespons
 	req.Header.Set("Content-Type", "application/json")
 
 	// Get the response
-	resp, err := c.Client.Do(req)
+	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	// Decode the response body
-	var result GraphQLResponse
+	var result Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
@@ -79,24 +111,24 @@ func (c *GraphQLClient) Mutation(graphqlRequest GraphQLRequest) (*GraphQLRespons
 	return &result, nil
 }
 
-type GraphQLResponse struct {
+type Response struct {
 	Data       any            `json:"data"`
-	Errors     []GraphQLError `json:"errors"`
+	Errors     []Error        `json:"errors"`
 	Extensions map[string]any `json:"extensions"`
 }
 
-type GraphQLRequest struct {
+type Request struct {
 	Query     string         `json:"query,omitempty"`
 	Variables map[string]any `json:"variables,omitempty"`
 }
 
-type GraphQLError struct {
-	Message   string                 `json:"message"`
-	Locations []GraphQLErrorLocation `json:"locations"`
-	Path      []any                  `json:"path"`
+type Error struct {
+	Message   string          `json:"message"`
+	Locations []ErrorLocation `json:"locations"`
+	Path      []any           `json:"path"`
 }
 
-type GraphQLErrorLocation struct {
+type ErrorLocation struct {
 	Line   int `json:"line"`
 	Column int `json:"column"`
 }
