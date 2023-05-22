@@ -53,7 +53,7 @@ func (c *Client) Query(graphqlRequest Request) (*Response, error) {
 	return &result, nil
 }
 
-func (c *Client) QueryWithContext(ctx context.Context, graphqlRequest Request) (*Response, error) {
+func (c *Client) QueryWithContext(ctx context.Context, graphqlRequest Request, cookies ...*http.Cookie) (*Response, error) {
 	// Build the request body
 	body, _ := json.Marshal(graphqlRequest)
 
@@ -66,6 +66,12 @@ func (c *Client) QueryWithContext(ctx context.Context, graphqlRequest Request) (
 
 	req.Header = c.Header
 	req.Header.Set("Content-Type", "application/json")
+
+	if len(cookies) > 0 {
+		for _, v := range cookies {
+			req.AddCookie(v)
+		}
+	}
 
 	// Get the response
 	resp, err := c.HttpClient.Do(req)
